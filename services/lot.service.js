@@ -1,9 +1,14 @@
-import { Op } from "sequelize";
+import { Op, Sequelize } from "sequelize";
 import Lot from "../models/lot.model.js";
 import User from "../models/user.model.js";
 import db from "../configs/db.config.js";
 import Bid from "../models/bide.model.js";
 import LotFeaturesDetails from "../models/lot.details.model.js";
+import SalesAgreement from "../models/sales.agreement.model.js";
+import notificationsService from "./notifications.service.js";
+import { salesAgreementEmail } from "../configs/email.config.js";
+import express from 'express'
+const app= express()
 
 class LotServices {
     async addLot(lot,featuresDeatils){
@@ -45,19 +50,25 @@ class LotServices {
 
     async joinToLotBidders (id,userId){
       try {
-        const user = await User.findOne({where:{id:userId}})
+        const user = await User.findOne({where:{id:userId},include:'Balance'})
          const lot = await Lot.findOne({where:{id}})
+          if(lot.status =='completed'){throw new Error("Lot bitmisdir")}
          if(user && lot){
-            let lotBidders = lot.bidders.length>0?[...lot.bidders]:[]
-            lotBidders.push(user.id)
-             lot.bidders =[...lotBidders]
+           let lotBidders = lot.bidders.length>0?[...lot.bidders]:[]
+           if(lotBidders.includes(user.id)){throw new Error("Lotda istirakcisiz zaten.")}
+
+           lotBidders.push(user.id)
+           lot.bidders =[...lotBidders]
+             if(user.Balance.balanceMoney > 5){
+              user.Balance.balanceMoney = user.Balance.balanceMoney -5
+            }
              await lot.save()
+             await user.Balance.save()
               user.addJoinedLots(lot)
              return lot.bidders
           }
       } catch (error) {
-        console.log(error);
-        throw new Error("Lota qoşularkən xəta baş verdi.")
+        throw new Error(error)
         
       }
 
@@ -135,10 +146,15 @@ class LotServices {
   async getLotById(id){
     try {
       const lot = await Lot.findOne({where:{id},
+      
         include:[{
+          model:LotFeaturesDetails,
+          as:"LotDetail"
+        },
+        {
           model:Bid,
           as:'LotBids',
-          attributes:['bidAmount'],
+          // attributes:['bidAmount','status'],
           include:[
             {
               model:User,
@@ -147,7 +163,6 @@ class LotServices {
           ]
         }]
       })
-      console.log(id);
         return lot
      } catch (error) {
       console.log(error);
@@ -192,6 +207,40 @@ class LotServices {
     } catch (error) {
         throw new Error(error)
     }
+  }
+
+  async sellLot (lotId,winnerBid) {
+    const transaction = await db.transaction();
+     try {
+        const lot = await Lot.findOne({where:{id:lotId}})
+        const bid = await Bid.findOne({where:{id:winnerBid}})
+        // if(lot.status!=='active'){throw new Error('Satis edilmisdir')}
+        if(lot && bid && lot.id == bid.lotId){
+          const lotOwner = await User.findOne({where:{id:lot.ownerId}})
+          const bidUser = await User.findOne({where:{id:bid.userId}})
+            lot.status = 'completed'
+            lot.winnerUserId = bidUser.id
+            lot.winnerBidId = bid.id
+            const newAgreement = await SalesAgreement.create({
+              lotId:lot.id,
+              saller:lotOwner.id,
+              buyer:bidUser.id,
+              endPrice:bid.bidAmount
+            },{transaction})
+            await lot.save()
+            let textTOBuyer = `${lot.lotNumber} (${lot.lotName}) lotun qalibi oldunuz. Alisi tesdiqleyin.`
+            let textSaller = `${lot.lotNumber} (${lot.lotName}) lotu bitmisdir. Satisi tesdiqleyin.`
+            const notfyToBuyer = await notificationsService.salesAgreementNotif({userId:bidUser.id,message:textTOBuyer,detailId:newAgreement.id,type:'sale-agreement'})
+            const notfyToSaller = await notificationsService.salesAgreementNotif({userId:lotOwner.id,message:textSaller,detailId:newAgreement.id,type:'sale-agreement'})
+            const emailToSaller = await salesAgreementEmail({user:lotOwner,saleAgreement:newAgreement,lot,type:'saler'})
+            const emailToBuyer = await salesAgreementEmail({user:bidUser,lot,saleAgreement:newAgreement})
+            await transaction.commit();
+          return {message:`Lot bitmisdir. Qalib istifadeci ${bidUser.first_name} ${bidUser.last_name}, satis meblegi :${bid.bidAmount}`,newAgreement,notfyToBuyer,notfyToSaller}
+        }
+     } catch (error) {
+      await transaction.rollback();
+      throw new Error(error)
+     }
   }
 
     async getNextAvailableLot() {

@@ -1,14 +1,18 @@
+import { io } from "../index.js";
 import { localToUTC } from "../middlewares/timezone.js";
-import { fileDelete } from "../middlewares/upload.file.js";
+import { fileDelete, resizeFiles } from "../middlewares/upload.file.js";
 import lotService from "../services/lot.service.js";
 
 export const addLot =async (req,res,next)=>{
     const files =[]
+    let delfiles = []
     const io =req.app.get('io')
-           req.files.lotImages.forEach(element => {
-            files.push(element.filename)
-             
-           });
+    // console.log(req.processedFiles);
+    req.files.lotImages.forEach(element => {
+        files.push(element.filename)
+        });
+    const result = await resizeFiles(files)
+     console.log(result);
            try {
             const today = new Date()
           const startTime = localToUTC(req.body.startTime)
@@ -16,24 +20,24 @@ export const addLot =async (req,res,next)=>{
 
        if(today.getTime()> startDate.getTime() ) {throw new Error("Wrong date ")}
         const lot = { 
-            lotName:req.body.lotName,
+            lotName:req.body.lotName, 
             ownerId:req.body.ownerId,
             ownerName:req.body.ownerName,  
             location:req.body.location, 
             startPrice:req.body.startPrice,  
             interval:req.body.interval,
-            image:[...files],
+            image:[...result],
             startTime:startTime,
             detailsText:req.body.detailsText
         }
         const featuresDeatils = JSON.parse(req.body.featuresDeatils)
         const newLot = await lotService.addLot(lot,featuresDeatils)
-
+        //   fileDelete(delfiles)
         res.status(200).json({newLot})
-
+ 
         
     } catch (error) {
-        fileDelete(files)
+        fileDelete(result)
         next(error)
     }
 
@@ -43,7 +47,7 @@ export const joinToLotBidders = async (req,res,next)=>{
     const {id} =req.params
     const {userId} =req.body
 
-    try {
+    try { 
         const lotBidders = await lotService.joinToLotBidders(id,userId)
         res.status(200).json({lotBidders})
     } catch (error) {
@@ -67,7 +71,8 @@ export const getLotById = async(req,res,next)=>{
     const {id} =req.params
     try {
         const result = await lotService.getLotById(id)
-
+        io.emit('joinLot')
+        
         res.status(200).json({result})
     } catch (error) {
         next(error)
@@ -94,4 +99,14 @@ export const likeLot =async (req,res,next)=>{
         next(error)
 
      }
+}
+
+export const sellLot =async (req,res,next)=>{
+    const {lotId,winnerBid} = req.body
+    try {
+         const result = await lotService.sellLot(lotId,winnerBid)
+         res.status(200).json(result)
+    } catch (error) {
+        next(error)
+    }
 }

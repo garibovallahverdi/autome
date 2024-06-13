@@ -1,28 +1,43 @@
-import User from "../models/user.model.js";
+import authService from "../services/auth.service.js"
 
 
-export const register = async (req,res) => {
-
-    console.log(req.body);
-    const { first_name,last_name,email,password, phone_number} = req.body
+export const register = async (req,res,next) => {
+    const {first_name,last_name,email,password} =req.body
     try {
-         const newUser = await User.create({first_name,last_name,email,password,phone_number})
+        const user ={
+            first_name,
+            last_name,
+            email,
+            password
+        }
+        const result = await authService.register(user)
+        res.status(200).json({result})
 
-         res.status(200).json({newUser})
     } catch (error) {
-        res.status(400).json({error}) 
-    } 
-
+        next(error)
+    }
+   
 }
 
-export const getuserLots = async (req,res,next)=>{
-    const {id} =req.params
-    try {
-        const user = await User.findOne({where:{id}})
-        const lots = await user.getJoinedLots()
-        res.status(200).json(lots)
-    } catch (error) {
-        res.status(400).json({error}) 
+export const accountConfirmed = async (req,res,next)=>{
 
+    const {token} =req.params
+    try {
+        
+        const result = await authService.accountConfirmed(token)
+        if(result && result.status == true){
+            // let user = result.user
+            // console.log(user);
+            //  req.login(user, (err) => {
+            //         if (err) return console.log(err,"AAAAAAAAAAAAAAAAAA");
+            //         res.redirect(process.env.BACKEND_URL + '/auth/profile');
+            //         // res.status(200).json("Session tapildi")
+            //     });
+            res.status(200).json({user:result.user})
+        }
+
+    } catch (error) {
+        next(error)
     }
+    
 }

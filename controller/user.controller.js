@@ -1,3 +1,4 @@
+import Notifications from "../models/notifications.model.js"
 import userService from "../services/user.service.js"
 
 
@@ -56,6 +57,18 @@ export const getCardById = async (req,res,next)=>{
         const result = await userService.getCardById(userId,id)
         res.status(200).json({result})
     } catch (error) {
+        next(error)
+    }
+}
+
+export const getNotification = async(req,res,next)=>{
+    const {id} =req.params
+
+    try {
+        const notfication = await Notifications.findOne({where:{userId:id},include:"Detail"})
+        res.status(200).json(notfication)
+    } catch (error) {
+        console.log(error);
         next(error)
     }
 }

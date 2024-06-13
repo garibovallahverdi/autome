@@ -2,19 +2,22 @@ import db from "../configs/db.config.js";
 import Bid from "../models/bide.model.js";
 import Lot from "../models/lot.model.js";
 import User from "../models/user.model.js";
-
-
+import express from 'express'
+const app =express()
+const io = app.get('io')
 class BidServices{
 
     async addBid (bid){
       const transaction = await db.transaction();
         try { 
             const lot = await Lot.findOne({where:{id:bid.lotId}})
-              if(lot.status!=='active'){throw new Error("Lot activ deyil")}
+             const findUser = await User.findOne({where:{id:bid.userId},include:'Balance'})
+             if(lot.status!=='active'){throw new Error("Lot activ deyil")}
+             
              let lotBidders = [...lot.bidders]
-
-              if(lotBidders.includes(bid.userId)){
-                    
+             
+             if(lotBidders.includes(bid.userId)){
+                if(findUser.Balance.bidChance <= 0) {throw new Error("Teklif vermek ucun balansinizi arttirin.")}
                 const maxBid = await Bid.findOne({
                   where:{
                     lotId:lot.id,
@@ -38,7 +41,14 @@ class BidServices{
                 const newBid = await Bid.create({
                   ...bid 
                })
+               lot.bidCounts= lot.bidCounts+1
+
+               findUser.Balance.bidChance = findUser.Balance.bidChance -1
+               io.to(`lot_${lotNumber}`).emmit('newBid')
+              await lot.save()
+               await findUser.Balance.save()
                await transaction.commit();
+                io.to(`lot_${lot.lotNumber}`).emit('newBid', { newBid});
                 return {newBid ,updatedBidesData}
               }else {
                 throw new Error(`Ən yüksək təklif məbləğindən aşağı təklif verə bilməzsiniz. Ən yuksək təklif ${maxBid.bidAmount}`)

@@ -45,10 +45,7 @@ const Lot = db.define('lots',{
         type:DataTypes.DATE,
         allowNull:false
     },
-    endTime:{
-        type:DataTypes.DATE,
-        allowNull:false
-    },
+
     status:{
         type:DataTypes.STRING,
         allowNull:false,
@@ -70,7 +67,11 @@ const Lot = db.define('lots',{
         type:DataTypes.INTEGER,
         allowNull:false
     },
-    winner:{
+    winnerUserId:{
+        type:DataTypes.UUID,
+        defaultValue:null
+    },
+    winnerBidId:{
         type:DataTypes.UUID,
         defaultValue:null
     },
@@ -80,7 +81,11 @@ const Lot = db.define('lots',{
     },
     bidCounts:{
         type:DataTypes.INTEGER,
-        defaultValue:null
+        defaultValue:0
+    },
+    lotViews:{
+        type:DataTypes.INTEGER,
+        defaultValue:0
     },
     createdAt:{
         type:DataTypes.DATE,
@@ -91,15 +96,15 @@ const Lot = db.define('lots',{
         default:Date.now()
     }
 }, {timestamps:true},
-{
-    validate: {
-      startTimeBeforeEndTime() {
-        if (this.startTime >= this.endTime) {
-          throw new Error('Start time must be before end time');
-        }
-      }
-    }
-  },
+// {
+//     validate: {
+//       startTimeBeforeEndTime() {
+//         if (this.startTime >= this.endTime) {
+//           throw new Error('Start time must be before end time');
+//         }
+//       }
+//     }
+//   },
   
 )
 
