@@ -5,7 +5,8 @@ import User from "../models/user.model.js";
 import express from 'express'
 const app =express()
 const io = app.get('io')
-class BidServices{
+
+class BidServices {
 
     async addBid (bid){
       const transaction = await db.transaction();
@@ -17,14 +18,15 @@ class BidServices{
              let lotBidders = [...lot.bidders]
              
              if(lotBidders.includes(bid.userId)){
-                if(findUser.Balance.bidChance <= 0) {throw new Error("Teklif vermek ucun balansinizi arttirin.")}
+                // if(findUser.Balance.bidChance <= 0) {throw new Error("Teklif vermek ucun balansinizi arttirin.")}
                 const maxBid = await Bid.findOne({
                   where:{
                     lotId:lot.id,
                   },
                   order:[['bidAmount','DESC']]
                 })
-                if(!maxBid || maxBid.bidAmount<bid.bidAmount){
+                // if(maxBid.userId == bid.userId){throw new Error("Son teklif zaten sizinkidir")}
+                if(!maxBid || maxBid.bidAmount<bid.bidAmount){ 
 
                  const [numOfupdatedbides,updatedBidesData] = await Bid.update(
                   {status:'invalid'},
@@ -34,22 +36,31 @@ class BidServices{
                       status:'valid'
                       
                     },
+
                     returning: true, 
                     transaction
                   }
                 )
-                const newBid = await Bid.create({
+                const createBid = await Bid.create({
                   ...bid 
                })
+               const newBid = await Bid.findOne({where:{id:createBid.id},
+                include:[
+                  {
+                    model:User,
+                    as:'BidUser'
+                  }
+                ],
+                })
                lot.bidCounts= lot.bidCounts+1
+               lot.startPrice = newBid.bidAmount
 
                findUser.Balance.bidChance = findUser.Balance.bidChance -1
-               io.to(`lot_${lotNumber}`).emmit('newBid')
+              //  io.to(`lot_${lotNumber}`).emmit('newBid')
               await lot.save()
                await findUser.Balance.save()
                await transaction.commit();
-                io.to(`lot_${lot.lotNumber}`).emit('newBid', { newBid});
-                return {newBid ,updatedBidesData}
+                return {newBid }
               }else {
                 throw new Error(`Ən yüksək təklif məbləğindən aşağı təklif verə bilməzsiniz. Ən yuksək təklif ${maxBid.bidAmount}`)
               }

@@ -1,5 +1,5 @@
 import express from 'express'
-import { addBankCart, getCardById, getCards, getNotification, updateAccountDetails } from '../controller/user.controller.js'
+import { addBankCart, changePassword, getCardById, getCards, getNotification, updateAccountDetails } from '../controller/user.controller.js'
 
 const router = express.Router()
 
@@ -9,4 +9,5 @@ router.post('/add-card/:id',addBankCart)
 router.post('/get-cards/:userId',getCards)
 router.post('/get-card-byid/:id',getCardById)
 router.get('/get-notification/:id', getNotification)
+router.post('change-password',changePassword)
 export default router 

@@ -6,6 +6,7 @@ import bcrypt from 'bcrypt'
 import User from '../models/user.model.js'
 import dotenv from "dotenv"
 import Notifications from '../models/notifications.model.js'
+import UserBalance from '../models/user.balance.js'
 
 dotenv.config
 passport.use(
@@ -49,7 +50,7 @@ passport.use(
       try {
         let user = await User.findOne({ where: { googleId: profile.id } })
 
-        if (!user) {
+        if (!user) {    
           const newUser = {
             googleId: profile.id, 
             first_name: profile.name.givenName,
@@ -58,8 +59,8 @@ passport.use(
             email: profile.emails[0].value
             }
             
-            const notif = await Notifications.create({userId:user.id})
             user = await User.create(newUser)
+            const notif = await Notifications.create({userId:user.id})
         }
         return done(null, user)
       } catch (error) {

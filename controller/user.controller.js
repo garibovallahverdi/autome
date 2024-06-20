@@ -72,3 +72,14 @@ export const getNotification = async(req,res,next)=>{
         next(error)
     }
 }
+
+export const changePassword = async (req,res,next)=>{
+    const {userId,oldPasswrd,newPassword} =req.body
+    try {
+        const result =await userService.changePassword(userId,oldPasswrd,newPassword)
+
+        res.status(200).json({result})
+    } catch (error) {
+        next(error)
+    }
+}

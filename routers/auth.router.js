@@ -1,7 +1,8 @@
 import express from 'express'
-import { accountConfirmed, register } from '../controller/auth.controller.js'
-import passport from '../configs/passport.config.js'
-
+import { accountConfirmed, forgotPasspowrd, register, resetPassword, verifyForgetPassword } from '../controller/auth.controller.js'
+import passport from 'passport'
+import  '../configs/passport.config.js'
+// import passport from 'passport'
 const router = express.Router()
 
 router.post('/register',register)
@@ -10,7 +11,7 @@ router.get('/account-confirmed/:token',accountConfirmed)
 router.post('/login', 
     passport.authenticate('local', { failureRedirect: '/login-failure' }),
     (req, res) => {
-      res.redirect(process.env.FRONTEND_URL + '/profile');
+      res.redirect(process.env.FRONTEND_URL + '/');
     }
   );
 
@@ -20,13 +21,14 @@ router.post('/login',
   router.get('/google/callback', 
     passport.authenticate('google', { failureRedirect: '/' }),
     (req, res) => {
-      // res.redirect(process.env.BACKEND_URL + '/profile');
-      res.status(200).json("Done")
+      res.redirect(process.env.FRONTEND_URL + '/');
+      // res.status(200).json("Done")
     }
   )
 
   router.get('/profile', (req, res) => {
     if (!req.isAuthenticated()) {
+      console.log("not auth");
       return res.redirect('/');
     } 
     res.json(req.user);
@@ -34,9 +36,11 @@ router.post('/login',
 
   router.get('/logout', (req, res) => {
     req.logout(() => {
-      res.redirect(process.env.FRONTEND_URL);
+      res.status(200).json({message:'Log out'})
     });
   });
   
-
+  router.post('/forgot-password', forgotPasspowrd);
+  router.get('/verify-resetpass-token/:token', verifyForgetPassword);
+  router.post('/reset-password/:token', resetPassword);
 export default router 

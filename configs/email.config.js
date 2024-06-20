@@ -35,6 +35,30 @@ export const confirmAccountEmail = async (email,token)=>{
 
 }
 
+
+export const resePasswordMail = async (email,token)=>{
+    let verificationLink = `${process.env.BACKEND_URL}/auth/reset-password/${token}`
+
+    const mailBody = ` 
+    <p style="font-size:20px, font-weight:bold">Sifreni enilemek ucun linke gedin. </p>
+    <a href="${verificationLink}" style="background-color: #4CAF50; color: white; padding: 15px 25px; text-align: center; text-decoration: none; display: inline-block; font-size: 20px; font-weight: bold; margin: 4px 2px; cursor: pointer; border-radius: 10px;">
+    Yenile</a>`
+    const mailOptions = {
+        from: process.env.NODEMAILER_ADRESS,
+        to: email,
+        subject: 'Reset Password',
+        html: mailBody
+    };
+
+    try {
+        const result = await transporter.sendMail(mailOptions);
+        return {result:result,status:true}
+    } catch (error) {
+        return {error:error,status:false}
+    }
+
+}
+
 export const salesAgreementEmail = async({user,saleAgreement,lot ,type})=>{
     let  salesAgreement = `http://localhost:9000/agreements/getsales-agreement/${user.id}/${saleAgreement.id}`
     let mailBody =''

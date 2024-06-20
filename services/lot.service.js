@@ -65,7 +65,7 @@ class LotServices {
              await lot.save()
              await user.Balance.save()
               user.addJoinedLots(lot)
-             return lot.bidders
+             return lotBidders
           }
       } catch (error) {
         throw new Error(error)
@@ -124,18 +124,15 @@ class LotServices {
     async getAllLots(limit,offset){
         
         try {
-            let where = []
-            if (filters.price) {
-                where.price = {
-                  [Op.between]: [filters.price.min, filters.price.max],
-                };
-              }
-
-            const result = await Lot.findAll({
-                where,
-                limit,
-                offset 
-            })
+          // let where = []
+          // if (filters.price) {
+          //   where.price = {
+          //     [Op.between]: [filters.price.min, filters.price.max],
+          //   };
+          // }
+          console.log("AAA");
+ 
+            const result = await Lot.findAll()
             
             return result
         } catch (error) {
@@ -147,22 +144,29 @@ class LotServices {
     try {
       const lot = await Lot.findOne({where:{id},
       
-        include:[{
+        include:[
+          {
+            model:Bid,
+            as:'LotBids',
+            include:[
+              {
+                model:User,
+                as:'BidUser'
+              }
+            ],
+            
+            
+          },
+          {
           model:LotFeaturesDetails,
           as:"LotDetail"
-        },
-        {
-          model:Bid,
-          as:'LotBids',
-          // attributes:['bidAmount','status'],
-          include:[
-            {
-              model:User,
-              as:'BidUser'
-            }
-          ]
-        }]
+        }, 
+       
+      ],
+      order: [[{ model: Bid, as: 'LotBids' }, 'createdAt', 'DESC']]
       })
+      lot.lotViews = lot.lotViews+1
+      await lot.save()
         return lot
      } catch (error) {
       console.log(error);
@@ -242,7 +246,7 @@ class LotServices {
       throw new Error(error)
      }
   }
-
+ 
     async getNextAvailableLot() {
         const lots = await Lot.findAll({
           attributes: ['lotNumber'],

@@ -14,22 +14,30 @@ import ModelRelations from './middlewares/model.realtions.js'
 import SalesRouter from './routers/sales.router.js'
 import checkEmtyLot from './middlewares/checklotbidesisEmpty.js'
 import session from 'express-session'
-import passport from 'passport'
+import passport from './configs/passport.config.js'
+import path from 'path'
+import { fileURLToPath } from 'url'
 const app =express()
 
 dotenv.config() 
 // app.use('/lot/add-lot',  express.static(path.join('tempdirectory')))
 
+  
+  app.use(cors(   {
+    origin: process.env.FRONTEND_URL,
+    credentials: true
+}));
+  
 app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
      saveUninitialized: true,
      cookie: { secure: false } //
   }));
-  app.use(passport.initialize());
+
+app.use(passport.initialize());
 app.use(passport.session());
 
-app.use(cors())
 app.use(bodyParser.json({limit:"60mb"}))
 app.use(bodyParser.urlencoded({limit:"60mb",extended:true}))
 
@@ -45,37 +53,49 @@ app.use((err, req, res, next) => {
     res.status(500).json({ message: err.message });
   });
 
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+  
+  app.use('/upload', express.static(path.join(__dirname, 'upload')));
+  
 const server =http.createServer(app)
 
 export const io = new Server(server,{ 
     cors:{
-        origin:'http://localhost:9000',
-        methods:['GET','POST']
-    }
-})
+        origin:'http://localhost:3000',
+        methods:['GET','POST'],
+        credentials:true,
+        allowedHeaders: 'Content-Type, Authorization',
 
-io.on('connection',(socket)=>{
+    }
+}) 
+
+io.on('connection',(socket)=>{ 
     console.log('Connection');
   
     socket.on('joinLot', (lotNumber) => {
-        socket.join(`lot_${lotNumber}`);
-        console.log(`İstemci ${socket.id} lot_${lotNumber} odasına katıldı`);
+        const roomName = `lot_${lotNumber}`;
+        socket.join(roomName);
+        console.log(`Client ${socket.id} joined room ${roomName}`);
       });
-
-      socket.on('newBid',(data)=>{
-        console.log(data,"Bide geldi");
-      })
+    
+      socket.on('newBid', (data) => {
+        const roomName = `lot_${data.lotNumber}`;
+        io.to(roomName).emit('receiveBid', data);
+        console.log(`Bid received in room ${roomName}:`, data);
+      });
+    
       socket.on('disconnect', () => {
         console.log('İstemci bağlantısı kapandı:', socket.id);
       });
 }) 
 
 server.listen(process.env.PORT,async()=>{
-    try {
+    try { 
         await db.authenticate()
         ModelRelations() 
         db.sync({ 
-            // force:true     
+            // force:true              
         }).then(()=>{ 
             console.log("Sync");
         }) 

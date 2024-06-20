@@ -49,7 +49,7 @@ export const joinToLotBidders = async (req,res,next)=>{
 
     try { 
         const lotBidders = await lotService.joinToLotBidders(id,userId)
-        res.status(200).json({lotBidders})
+        res.status(200).json({ lotBidders })
     } catch (error) {
         next(error)
     }
@@ -71,7 +71,6 @@ export const getLotById = async(req,res,next)=>{
     const {id} =req.params
     try {
         const result = await lotService.getLotById(id)
-        io.emit('joinLot')
         
         res.status(200).json({result})
     } catch (error) {
@@ -83,6 +82,15 @@ export const getLotBids = async(req,res,next)=>{
     try {
         const result = await lotService.getLotBids(id)        
         res.status(200).json({result})
+    } catch (error) {
+        next(error)
+    }
+}
+export const getAllLot =async (req,res,next)=>{
+    const {offset, limit} =req.query
+        try {
+          const lots = await  lotService.getAllLots(limit,offset)
+          res.status(200).json(lots)
     } catch (error) {
         next(error)
     }

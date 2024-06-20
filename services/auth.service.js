@@ -1,5 +1,5 @@
 import { Op } from "sequelize";
-import { confirmAccountEmail } from "../configs/email.config.js";
+import { confirmAccountEmail, resePasswordMail } from "../configs/email.config.js";
 import User from "../models/user.model.js";
 import bcrypt from 'bcrypt'
 import crypto from 'crypto'
@@ -68,6 +68,68 @@ class AuthService {
             throw new Error(error)
         }
     }
+
+    async forgotPassword(email){
+        const findUser = User.findOne({where:{email:email}})
+        try {
+               if(!findUser){throw new Error("User does not exsist")}
+
+               const token = crypto.randomBytes(20).toString('hex')
+               findUser.resetPasswordToken = token
+               findUser.resetPasswordExpires = Date.now() + 3600000
+               const emailResult = await resePasswordMail(email,token)
+               if(emailResult.status){
+                await findUser.save()
+                return{ message:"Mail gonderildi"}
+               }else {
+                throw new Error(emailResult.error)
+               }
+
+        } catch (error) {
+            throw new Error(error)
+        }
+    }
+    async verifyForgetPassword (token){
+        try {
+            const user = await User.findOne({
+                where: {
+                    resetPasswordToken: token,
+                    resetPasswordExpires: { [Op.gt]: Date.now() }
+                }
+              })
+          
+              if (!user) {
+                throw new Error("TokenExpiredError")
+              }
+          
+             
+              return user
+        } catch (error) {
+            throw new Error(error)            
+        }
+    }
+    async resetPassword(token,password){
+        try {
+            const user = await User.findOne({
+                where: {
+                  resetPasswordToken: token,
+                  resetPasswordExpires: { [Op.gt]: Date.now() }
+                }
+              })
+              if (!user) {
+                 throw new Error({ message: 'Invalid or expired token.' })
+              }
+              const salt = await bcrypt.genSalt(10)
+              user.password = await bcrypt.hash(password, salt)
+              user.resetPasswordToken = null
+              user.resetPasswordExpires = null
+              await user.save()
+              return    {message:"Password has been reset"}
+        } catch (error) {
+            throw new Error(error)
+        }
+    }
+  
 }
 
 export default new AuthService()

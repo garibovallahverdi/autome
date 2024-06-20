@@ -73,12 +73,12 @@ const Lot = db.define('lots',{
     },
     winnerBidId:{
         type:DataTypes.UUID,
-        defaultValue:null
+        defaultValue:null 
     },
     bidders:{
         type:DataTypes.ARRAY(DataTypes.UUID),
         defaultValue:[]
-    },
+    }, 
     bidCounts:{
         type:DataTypes.INTEGER,
         defaultValue:0
