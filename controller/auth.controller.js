@@ -24,14 +24,17 @@ export const register = async (req,res,next) => {
     try {
         const user ={
             first_name,
-            last_name,
+            last_name, 
             email,
             password
+        }
+        if(!first_name || !last_name || !email || !password){
+          throw new Error("Butun inputlari doldurun")
         }
         const result = await authService.register(user)
         res.status(200).json({result})
 
-    } catch (error) {
+    } catch (error) { 
         next(error)
     }
    
