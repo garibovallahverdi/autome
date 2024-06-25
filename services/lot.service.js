@@ -130,9 +130,18 @@ class LotServices {
           //     [Op.between]: [filters.price.min, filters.price.max],
           //   };
           // }
-          console.log("AAA");
  
-            const result = await Lot.findAll()
+            const result = await Lot.findAll({
+              where:{
+                [Op.or]: [
+                  { status: 'active' },
+                  { status: 'scheduled' }
+                ]
+              },
+              order: [
+                ['startTime', 'ASC']
+              ]
+            })
             
             return result
         } catch (error) {
@@ -165,7 +174,7 @@ class LotServices {
       ],
       order: [[{ model: Bid, as: 'LotBids' }, 'createdAt', 'DESC']]
       })
-      lot.lotViews = lot.lotViews+1
+      lot.lotViews += 1
       await lot.save()
         return lot
      } catch (error) {

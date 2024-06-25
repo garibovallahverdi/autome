@@ -7,6 +7,7 @@ import User from '../models/user.model.js'
 import dotenv from "dotenv"
 import Notifications from '../models/notifications.model.js'
 import UserBalance from '../models/user.balance.js'
+import { Op } from 'sequelize'
 
 dotenv.config
 passport.use(
@@ -14,10 +15,10 @@ passport.use(
     {
       usernameField: 'email',
       passwordField: 'password'
-    },
+    }, 
     async (email, password, done) => {
       try {
-        const user = await User.findOne({ where: { email } })
+        const user = await User.findOne({ where: { email,confirmed:true } })
         if (!user) {
           return done(null, false, { message: 'Incorrect email or password.' })
         }
@@ -34,7 +35,7 @@ passport.use(
         return done(null, user)
       } catch (error) {
         return done(error)
-      }
+      } 
     }
   )
 )
@@ -48,7 +49,14 @@ passport.use(
     },
     async (accessToken, refreshToken,profile, done) => {
       try {
-        let user = await User.findOne({ where: { googleId: profile.id } })
+        let user = await User.findOne({
+          where: {
+            [Op.or]: [
+              { googleId: profile.id },
+              { email: profile.emails[0].value }
+            ]
+          }
+        });
 
         if (!user) {    
           const newUser = {
@@ -73,6 +81,7 @@ passport.use(
 
 passport.serializeUser((user, done) => {
   console.log('Serializing user:', user)
+  
   done(null, user.id)
 })
 

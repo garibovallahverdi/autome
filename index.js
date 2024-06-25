@@ -25,10 +25,10 @@ dotenv.config()
   
   app.use(cors(   {
     origin: process.env.FRONTEND_URL,
-    credentials: true
-}));
-  
-app.use(session({
+    credentials: true  
+})); 
+   
+app.use(session({ 
     secret: process.env.SESSION_SECRET,
     resave: false,
      saveUninitialized: true,
@@ -43,18 +43,18 @@ app.use(bodyParser.urlencoded({limit:"60mb",extended:true}))
 
 
 app.use('/auth',AuthRouter)
-app.use('/users',UserRouter)
-app.use('/lot',LotRouter)
-app.use('/bid',BidRouter)
-app.use('/agreements',SalesRouter)
+app.use('/users',UserRouter) 
+app.use('/lot',LotRouter) 
+app.use('/bid',BidRouter) 
+app.use('/agreements',SalesRouter) 
 
 
 app.use((err, req, res, next) => {
     res.status(500).json({ message: err.message });
   });
 
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = path.dirname(__filename);
+  const __filename = fileURLToPath(import.meta.url); 
+  const __dirname = path.dirname(__filename); 
   
   app.use('/upload', express.static(path.join(__dirname, 'upload')));
   
@@ -107,3 +107,4 @@ server.listen(process.env.PORT,async()=>{
         console.log(error);
     } 
 })
+ 

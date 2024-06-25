@@ -25,14 +25,12 @@ export const confirmAccountEmail = async (email,token)=>{
         subject: 'Email Verification',
         html: mailBody
     };
-
     try {
         const result = await transporter.sendMail(mailOptions);
         return {result:result,status:true}
     } catch (error) {
         return {error:error,status:false}
     }
-
 }
 
 

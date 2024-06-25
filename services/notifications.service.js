@@ -7,7 +7,7 @@ class NotificationService {
   async salesAgreementNotif({userId,message,detailId,type}){
     try {
         const notification = await  Notifications.findOne({where:{userId}})
-        let details = notification.content.length>0?[...notification.content]:[]
+        let details = notification?.content?.length>0?[...notification?.content]:[]
         let newDetail =''
                 newDetail = await NotificationDetail.create({
                 notificationId:notification.id,
@@ -22,6 +22,7 @@ class NotificationService {
         return newDetail
          
     } catch (error) {
+      console.log(error);
          throw new Error(error)
     }
   }

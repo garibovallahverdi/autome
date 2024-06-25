@@ -7,55 +7,55 @@ const LotFeaturesDetails = db.define('lot-features-details',{
         defaultValue: Sequelize.UUIDV4,
         primaryKey: true,
       },
-      manufacturer :{// istehsalci
+      manufacturer :{// istehsalci *****
         type:DataTypes.STRING,
          allowNull:false
        }, 
-      brand:{ 
+      brand:{ //****** */
         type:DataTypes.STRING,  
         allowNull:false 
       },
-      model:{
+      model:{//*********** */
         type:DataTypes.STRING,
          allowNull:false
        },
-       year:{
+       year:{//******** */
         type:DataTypes.STRING,
          allowNull:false
        },
-       vehicleType:{//sedan/jeep, ve.s
+       vehicleType:{//sedan/jeep, ve.s ******
         type:DataTypes.STRING,
          allowNull:false
        },
-       color:{ // rengi
+       color:{ // rengi ******
         type:DataTypes.STRING,
          allowNull:false
        },
-       mileage:{ // qet edilen mesafe
+       mileage:{ // qet edilen mesafe ***
         type:DataTypes.STRING,
          allowNull:false
        },
-      engineCapacity:{// mator hecmi
+      engineCapacity:{// mator hecmi ***
          type:DataTypes.STRING,
           allowNull:false
         },
-      carSegments:{// keyfiyet gostericilerine gore masinin categoriyasi, luks, ekonom, ve.s
+      carSegments:{// keyfiyet gostericilerine gore masinin categoriyasi, luks, ekonom, ve.s ***
          type:DataTypes.STRING,
           allowNull:false
         }, 
-      driveType:{// on ceker yoxsa arxa ceker oldugu,
+      driveType:{// on ceker yoxsa arxa ceker oldugu, ***
          type:DataTypes.STRING,
           allowNull:false
         }, 
-      engine:{// mator gucu
+      engine:{// mator gucu ***
          type:DataTypes.STRING,
           allowNull:false
         },
-      transmission:{// kecirici muherrikin novu, skoros/
+      transmission:{// kecirici muherrikin novu, skoros/ ***
          type:DataTypes.STRING,
           allowNull:false
         }, 
-      fuelType:{//yanacaq novu
+      fuelType:{//yanacaq novu ***************
          type:DataTypes.STRING,
           allowNull:false
         },

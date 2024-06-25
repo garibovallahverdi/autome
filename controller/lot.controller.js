@@ -27,7 +27,7 @@ export const addLot =async (req,res,next)=>{
             startPrice:req.body.startPrice,  
             interval:req.body.interval,
             image:[...result],
-            startTime:startTime,
+            startTime:startTime, 
             detailsText:req.body.detailsText
         }
         const featuresDeatils = JSON.parse(req.body.featuresDeatils)
@@ -109,12 +109,12 @@ export const likeLot =async (req,res,next)=>{
      }
 }
 
-export const sellLot =async (req,res,next)=>{
-    const {lotId,winnerBid} = req.body
-    try {
-         const result = await lotService.sellLot(lotId,winnerBid)
-         res.status(200).json(result)
-    } catch (error) {
-        next(error)
-    }
-}
+// export const sellLot =async (req,res,next)=>{
+//     const {lotId,winnerBid} = req.body
+//     try {
+//          const result = await lotService.sellLot(lotId,winnerBid)
+//          res.status(200).json(result)
+//     } catch (error) {
+//         next(error)
+//     }
+// }

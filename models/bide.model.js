@@ -29,7 +29,7 @@ const Bid = db.define('bides',{
         allowNull:false,
         defaultValue:'valid',
         validate: {
-            isIn: [['valid', 'invalid']] // Geçerli değerler
+            isIn: [['valid', 'invalid','winner']] // Geçerli değerler
           }
 
     },

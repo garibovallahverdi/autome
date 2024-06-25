@@ -5,8 +5,9 @@ import User from '../models/user.model.js'
 import notificationsService from '../services/notifications.service.js'
 import { sendEmailStartLotToLotBidders } from '../configs/email.config.js'
 import Bid from '../models/bide.model.js'
+import lotService from '../services/lot.service.js'
 
-   let lotStatusControl = cron.schedule('* * * * *',async ()=>{
+   let lotStatusControl = cron.schedule('* * * * * *',async ()=>{
     let date = new Date().toISOString()
         try { 
           //Gozlemekde olan lotlarin activ edilmesi  
@@ -25,11 +26,12 @@ import Bid from '../models/bide.model.js'
             ]
         })
         if(changeStatusToActiveLots){
-
+            
             const updatedActiveLots = changeStatusToActiveLots.map(async(lot)=>{
-                    
+                
                 lot.status='active'
-                let ownerMsg = 'Sahibi olldugunuz lot artiq baslamisdir'
+                let ownerMsg = `Sahibi olldugunuz ${lot.lotNumber} nomreli ${lot.lotName} lot artiq baslamisdir`
+                console.log("Taoilan lotlar",lot.ownerId);
                 await notificationsService.salesAgreementNotif({userId:lot.ownerId,message:ownerMsg,detailId:lot.id,type:'lot'})
                 const findLotBidders = await User.findAll({where:{id:{[Op.in]:lot.bidders}}})
                 if(findLotBidders.length > 0){
@@ -37,8 +39,8 @@ import Bid from '../models/bide.model.js'
                         let biddersMessage = `Qosludugunuz #${lot.lotNumber} nomreli  ${lot.lotName} lotu baslamisdir.`
                         await notificationsService.salesAgreementNotif({userId:bidder.id,message:biddersMessage,detailId:lot.id,type:'lot'})
                         await sendEmailStartLotToLotBidders({lot,user:bidder})
-                        })
-                        }
+                    })
+                }
                         
                 return lot.save()
             })
@@ -46,38 +48,34 @@ import Bid from '../models/bide.model.js'
         const activeLots = await Promise.all(updatedActiveLots)
     }
     try {
-        
+        const fiveHoursAgo = new Date();
     fiveHoursAgo.setHours(fiveHoursAgo.getHours() - 5);
         const findBids = await Bid.findAll({
             where:{
                 createdAt: {
                     [Op.lt]: fiveHoursAgo // createdAt, fiveHoursAgo'dan önce olanları al
-                  }
+                  },
+                  status:'valid'
             },
             include:[
                 {
                     model:Lot,
-                    as:"LotBids"
+                    as:"LotBids" 
                 }
             ]
         })
-        if(findBids){
-            for (let i = 0; i < findBids.length; i++) {
-                const bid = findBids[i];
-            
-                // LotBids modellerine erişelim ve status alanlarını değiştirelim
-                const lotBids = bid.LotBids;
-                for (let j = 0; j < lotBids.length; j++) {
-                  const lotBid = lotBids[j];
-            
-                  // Status alanını değiştirelim (Örneğin: "active" yapalım)
-                  lotBid.status = 'active';
-            
-                  // Değişikliği kaydedelim
-                  await lotBid.save();
-                }
-              }
-        }
+
+       findBids.map(async (bid)=>{
+            const lot = await Lot.findOne({where:{id:bid.lotId}})
+            lot.status ='completed'
+            bid.status ='winner'
+            let lotId =lot.id
+            let winnerBid = bid.id
+            await lotService.sellLot(lotId,winnerBid)
+            console.log("AAA");
+            await lot.save()
+            await bid.save()
+        })
     } catch (error) {
         throw new Error(error)
     }

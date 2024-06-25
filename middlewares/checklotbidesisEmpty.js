@@ -10,7 +10,7 @@ let checkEmtyLot = cron.schedule('* * * * *',async ()=>{
 let date = new Date().toISOString()
 
 try {
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    const oneHourAgo = new Date(Date.now() - 3* 5 * 60 * 60 * 1000);
     const lots = await Lot.findAll({
         where: {
             startTime: {
