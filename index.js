@@ -31,9 +31,15 @@ dotenv.config()
 app.use(session({ 
     secret: process.env.SESSION_SECRET,
     resave: false,
-     saveUninitialized: true,
-     cookie: { secure: false } //
-  }));
+    saveUninitialized: false,
+    cookie: 
+	{ 
+		secure: process.env.NODE_ENV==="production", 
+	     	httpOnly: true,
+		maxAge: 1000 * 60 * 24, 
+		domain: '.autome.az' 
+	} 
+}));
 
 app.use(passport.initialize());
 app.use(passport.session());
